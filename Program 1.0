@@ -1,0 +1,91 @@
+import os
+import requests
+import json
+import subprocess
+from datetime import datetime
+
+# Configuration
+PLATFORM = "github"  # or "gitlab"
+USERNAME = "Secretguy840"
+TOKEN = "your_personal_access_token"  # Required for private repos and higher API limits
+BACKUP_DIR = "backups"
+INCLUDE_ISSUES = True
+INCLUDE_WIKI = True
+
+def fetch_repos(platform,Secretguy840, token):
+    """Fetch all repositories for a given user/organization."""
+    repos = []
+    if platform == "github":
+        url = f"https://api.github.com/users/Secretguy840/repos" if not token else f"https://api.github.com/orgs/Secretguy840/repos"
+        headers = {"Authorization": f"token {token}"} if token else {}
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            repos = [repo["full_name"] for repo in response.json()]
+        else:
+            print(f"Error fetching GitHub repos: {response.status_code}")
+    elif platform == "gitlab":
+        url = f"https://gitlab.com/api/v4/users/{username}/projects"
+        headers = {"Private-Token": token} if token else {}
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            repos = [repo["path_with_namespace"] for repo in response.json()]
+        else:
+            print(f"Error fetching GitLab repos: {response.status_code}")
+    else:
+        print("Unsupported platform. Use 'github' or 'gitlab'.")
+    return repos
+
+def backup_repo(platform, repo_name, backup_dir, token):
+    """Backup a single repository, including issues and wiki (if enabled)."""
+    repo_backup_dir = os.path.join(backup_dir, repo_name.replace("/", "_"))
+    os.makedirs(repo_backup_dir, exist_ok=True)
+
+    # Clone the repository
+    if platform == "github":
+        repo_url = f"https://github.com/{repo_name}.git"
+    elif platform == "gitlab":
+        repo_url = f"https://gitlab.com/{repo_name}.git"
+    print(f"Cloning {repo_name}...")
+    subprocess.run(["git", "clone", repo_url, repo_backup_dir])
+
+    # Backup issues (GitHub only)
+    if INCLUDE_ISSUES and platform == "github":
+        issues_url = f"https://api.github.com/repos/{repo_name}/issues"
+        headers = {"Authorization": f"token {token}"} if token else {}
+        response = requests.get(issues_url, headers=headers)
+        if response.status_code == 200:
+            issues = response.json()
+            with open(os.path.join(repo_backup_dir, "issues.json"), "w") as f:
+                json.dump(issues, f, indent=4)
+            print(f"Backed up {len(issues)} issues for {repo_name}.")
+        else:
+            print(f"Error fetching issues for {repo_name}: {response.status_code}")
+
+    # Backup wiki (GitHub only)
+    if INCLUDE_WIKI and platform == "github":
+        wiki_url = f"https://github.com/{repo_name}.wiki.git"
+        wiki_dir = os.path.join(repo_backup_dir, "wiki")
+        os.makedirs(wiki_dir, exist_ok=True)
+        subprocess.run(["git", "clone", wiki_url, wiki_dir])
+        print(f"Backed up wiki for {repo_name}.")
+
+def main():
+    # Create backup directory with timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_dir = os.path.join(BACKUP_DIR, f"backup_{timestamp}")
+    os.makedirs(backup_dir, exist_ok=True)
+
+    # Fetch all repositories
+    repos = fetch_repos(PLATFORM, USERNAME, TOKEN)
+    if not repos:
+        print("No repositories found or an error occurred.")
+        return
+
+    # Backup each repository
+    for repo in repos:
+        backup_repo(PLATFORM, repo, backup_dir, TOKEN)
+
+    print(f"Backup completed successfully. Saved to: {backup_dir}")
+
+if __name__ == "__main__":
+    main()
