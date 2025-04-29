@@ -49,10 +49,3 @@ git clone https://github.com/yourusername/repo-name.git
 
 # Navigate to the project directory
 cd repo-name
-
-# Install dependencies
-npm install  # or yarn install, pip install, etc.
-
-# Run the project
-npm start    # or yarn start, python main.py, etc.
-
