@@ -1,0 +1,19 @@
+<nav>
+  <div class="logo">Brand</div>
+  <ul class="nav-links">
+    <li><a href="#">Home</a></li>
+    <li><a href="#">About</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+  <button class="burger">☰</button>
+</nav>
+
+<style>
+  nav { display: flex; justify-content: space-between; }
+  .nav-links { display: flex; gap: 1rem; }
+  .burger { display: none; }
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    .burger { display: block; }
+  }
+</style>
