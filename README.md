@@ -45,7 +45,7 @@ Step-by-step instructions on how to install and set up your project locally.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/repo-name.git
+git clone https://github.com/Secretguy840/A-new-project
 
 # Navigate to the project directory
-cd repo-name
+cd A-new-project
